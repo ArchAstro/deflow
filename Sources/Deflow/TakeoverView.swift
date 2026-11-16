@@ -22,7 +22,7 @@ struct TakeoverView: View {
             GeometryReader { geo in
                 let s = max(0.6, min(geo.size.width / 1512, 1.7))
                 ZStack {
-                    AuroraBackground(late: late)
+                    AuroraBackground(late: late, time: model.fixedNow?.timeIntervalSinceReferenceDate.truncatingRemainder(dividingBy: 3600), heat: model.fixedHeat)
                     LinearGradient(colors: [.black.opacity(0.62), .black.opacity(0.15), .clear],
                                    startPoint: .leading, endPoint: .trailing)
                     VStack(alignment: .leading, spacing: 0) {
@@ -242,10 +242,13 @@ private struct Keycap: View {
 /// Slow-drifting ember mesh: dark where the text sits, heat pooling on the right. Runs hotter once late.
 struct AuroraBackground: View {
     var late: Bool
+    /// Fixed animation clock and warmth (0 calm … 1 late) for frame-by-frame renders.
+    var time: Double?
+    var heat: Double?
 
     var body: some View {
         TimelineView(.animation(minimumInterval: 1.0 / 30)) { ctx in
-            let t = Float(ctx.date.timeIntervalSinceReferenceDate.truncatingRemainder(dividingBy: 3600))
+            let t = Float(time ?? ctx.date.timeIntervalSinceReferenceDate.truncatingRemainder(dividingBy: 3600))
             MeshGradient(width: 3, height: 3, points: [
                 [0, 0], [0.5 + 0.10 * sin(t * 0.31), 0], [1, 0],
                 [0, 0.5 + 0.08 * cos(t * 0.23)],
@@ -261,12 +264,16 @@ struct AuroraBackground: View {
     }
 
     private var palette: [Color] {
+        let h = heat ?? (late ? 1 : 0)
+        func mix(_ a: (Double, Double, Double), _ b: (Double, Double, Double)) -> Color {
+            Color(red: a.0 + (b.0 - a.0) * h, green: a.1 + (b.1 - a.1) * h, blue: a.2 + (b.2 - a.2) * h)
+        }
         let ink = Color(red: 0.03, green: 0.02, blue: 0.05)
         let plum = Color(red: 0.13, green: 0.04, blue: 0.16)
         let violet = Color(red: 0.24, green: 0.06, blue: 0.36)
-        let magenta = late ? Color(red: 0.82, green: 0.08, blue: 0.22) : Color(red: 0.70, green: 0.10, blue: 0.38)
-        let ember = late ? Color(red: 1.0, green: 0.24, blue: 0.10) : Color(red: 1.0, green: 0.45, blue: 0.12)
-        let glow = late ? Color(red: 1.0, green: 0.48, blue: 0.20) : Color(red: 1.0, green: 0.68, blue: 0.28)
+        let magenta = mix((0.70, 0.10, 0.38), (0.82, 0.08, 0.22))
+        let ember = mix((1.0, 0.45, 0.12), (1.0, 0.24, 0.10))
+        let glow = mix((1.0, 0.68, 0.28), (1.0, 0.48, 0.20))
         return [
             ink, plum, violet,
             ink, plum, ember,
