@@ -6,7 +6,7 @@
 set -euo pipefail
 cd "$(dirname "$0")/.."
 
-VERSION=0.2.0
+VERSION=0.2.1
 RELEASE=0
 for arg in "$@"; do [ "$arg" = "--release" ] && RELEASE=1; done
 
@@ -53,7 +53,10 @@ if [ "$RELEASE" = 1 ]; then
     [ -n "$IDENTITY" ] || { echo "No Developer ID Application identity found" >&2; exit 1; }
     codesign --force --options runtime --timestamp --sign "$IDENTITY" "$APP"
 else
-    IDENTITY=${SIGN_IDENTITY:-$(security find-identity -v -p codesigning | awk '/Apple Development|Developer ID Application/ {print $2; exit}')}
+    # Prefer the same Developer ID as release builds: a different signer makes macOS re-ask for Keychain access.
+    IDS=$(security find-identity -v -p codesigning)
+    IDENTITY=${SIGN_IDENTITY:-$(echo "$IDS" | awk '/Developer ID Application/ {print $2; exit}')}
+    IDENTITY=${IDENTITY:-$(echo "$IDS" | awk '/Apple Development/ {print $2; exit}')}
     codesign --force --sign "${IDENTITY:--}" "$APP"
 fi
 echo "Built $APP $VERSION (signed with ${IDENTITY:-ad-hoc})"

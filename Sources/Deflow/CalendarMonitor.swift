@@ -31,8 +31,10 @@ final class CalendarMonitor: ObservableObject {
 
     var onTrigger: (MeetingEvent) -> Void = { _ in }
     var canPresent: () -> Bool = { true }
-    var isSignedIn: Bool { isDemo || auth.isSignedIn }
+    /// False until `start()`, so nothing reads the Keychain before the app is really running.
+    var isSignedIn: Bool { isDemo || (started && auth.isSignedIn) }
     private var isDemo = false
+    private var started = false
 
     private let auth = GoogleAuth()
     private var handled: Set<String> = []
@@ -42,6 +44,7 @@ final class CalendarMonitor: ObservableObject {
     private var refreshTask: Task<Void, Never>?
 
     func start() {
+        started = true
         access = auth.isSignedIn ? .granted : .signedOut
         NSWorkspace.shared.notificationCenter.addObserver(
             forName: NSWorkspace.didWakeNotification, object: nil, queue: .main

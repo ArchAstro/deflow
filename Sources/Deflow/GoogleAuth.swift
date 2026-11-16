@@ -27,9 +27,23 @@ final class GoogleAuth: NSObject, ASWebAuthenticationPresentationContextProvidin
         + clientID.replacingOccurrences(of: ".apps.googleusercontent.com", with: "")
     static let redirect = "\(scheme):/oauth2redirect"
 
-    private var refreshToken: String? = Keychain.load() {
-        didSet { Keychain.save(refreshToken) }
+    /// Read from the Keychain on first use, never at launch, so render-only runs don't touch it.
+    private var refreshToken: String? {
+        get {
+            if !tokenLoaded {
+                cachedToken = Keychain.load()
+                tokenLoaded = true
+            }
+            return cachedToken
+        }
+        set {
+            cachedToken = newValue
+            tokenLoaded = true
+            Keychain.save(newValue)
+        }
     }
+    private var cachedToken: String?
+    private var tokenLoaded = false
     private var access: (token: String, expires: Date)?
     private var session: ASWebAuthenticationSession?
     private lazy var anchor = NSWindow()
