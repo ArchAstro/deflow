@@ -22,6 +22,7 @@ final class TakeoverModel: ObservableObject {
     /// Off for static renders (snapshots), where onAppear animations never run.
     var animatesIn = true
     var fixedNow: Date?
+    var fixedHeat: Double?
 
     var onPrimary: () -> Void = {}
     var onSnooze: () -> Void = {}

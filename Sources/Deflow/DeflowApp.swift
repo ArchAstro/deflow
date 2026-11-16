@@ -59,6 +59,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         if let i = args.firstIndex(of: "--render-dmg-bg"), args.indices.contains(i + 1) {
             Self.write(DMGBackgroundView(), to: args[i + 1], scale: args.contains("--2x") ? 2 : 1)
         }
+        // `--snapshot-frames dir` renders an 8-second takeover sequence (for the README animation).
+        if let i = args.firstIndex(of: "--snapshot-frames"), args.indices.contains(i + 1) {
+            Self.frames(to: args[i + 1])
+        }
         // `--snapshot-menu out.png` renders the menu panel with sample data and exits.
         if let i = args.firstIndex(of: "--snapshot-menu"), args.indices.contains(i + 1) {
             let monitor = CalendarMonitor()
@@ -75,6 +79,28 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         model.animatesIn = false
         model.fixedNow = Date()
         write(TakeoverView(model: model).frame(width: 1512, height: 982), to: path)
+    }
+
+    /// 10 fps from 4s before the start to 4s after, warming up as the meeting begins.
+    @MainActor
+    private static func frames(to dir: String) -> Never {
+        let base = Date()
+        let model = TakeoverModel(event: .demo(startingIn: 4.999))
+        model.animatesIn = false
+        for i in 0..<80 {
+            let now = base.addingTimeInterval(Double(i) / 10)
+            let sinceStart = now.timeIntervalSince(model.event.start)
+            let x = min(max((sinceStart + 0.2) / 1.6, 0), 1)
+            model.fixedNow = now
+            model.fixedHeat = x * x * (3 - 2 * x)
+            let renderer = ImageRenderer(content: TakeoverView(model: model).frame(width: 1200, height: 750))
+            renderer.scale = 1
+            guard let tiff = renderer.nsImage?.tiffRepresentation,
+                  let png = NSBitmapImageRep(data: tiff)?.representation(using: .png, properties: [:]),
+                  (try? png.write(to: URL(fileURLWithPath: dir).appendingPathComponent(String(format: "f%03d.png", i)))) != nil
+            else { exit(1) }
+        }
+        exit(0)
     }
 
     @MainActor
