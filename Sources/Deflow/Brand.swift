@@ -163,6 +163,60 @@ struct DMGBackgroundView: View {
     }
 }
 
+/// 1280×640 card for link previews (GitHub social preview): wordmark left, live takeover right.
+struct SocialCardView: View {
+    @MainActor static func make() -> SocialCardView {
+        let model = TakeoverModel(event: .demo(startingIn: 41.9))
+        model.animatesIn = false
+        model.fixedNow = Date()
+        return SocialCardView(model: model)
+    }
+
+    let model: TakeoverModel
+
+    var body: some View {
+        let screen = RoundedRectangle(cornerRadius: 22, style: .continuous)
+        return ZStack {
+            AuroraBackground(late: false, time: 40, heat: 0.35)
+            LinearGradient(colors: [.black.opacity(0.72), .black.opacity(0.2)], startPoint: .leading, endPoint: .trailing)
+
+            HStack(spacing: 0) {
+                VStack(alignment: .leading, spacing: 0) {
+                    HStack(spacing: 18) {
+                        BrandMark().frame(width: 62, height: 62)
+                        Text("Deflow").font(.system(size: 76, weight: .semibold, design: .serif))
+                    }
+                    Text("Never miss\nthe meeting.")
+                        .font(.system(size: 58, weight: .medium, design: .serif))
+                        .lineSpacing(-4)
+                        .padding(.top, 44)
+                    Text("FULL-SCREEN MEETING TAKEOVERS\nFOR GOOGLE CALENDAR ON macOS")
+                        .font(.system(size: 17, weight: .semibold, design: .monospaced))
+                        .tracking(2.6)
+                        .lineSpacing(7)
+                        .foregroundStyle(Color(red: 1.0, green: 0.74, blue: 0.42))
+                        .padding(.top, 34)
+                }
+                .padding(.leading, 76)
+                Spacer(minLength: 0)
+            }
+
+            TakeoverView(model: model)
+                .frame(width: 1512, height: 982)
+                .scaleEffect(0.5)
+                .frame(width: 756, height: 491)
+                .clipShape(screen)
+                .overlay(screen.strokeBorder(.white.opacity(0.22), lineWidth: 2))
+                .shadow(color: .black.opacity(0.55), radius: 40, y: 24)
+                .rotationEffect(.degrees(-3))
+                .offset(x: 400, y: 30)
+        }
+        .foregroundStyle(.white)
+        .frame(width: 1280, height: 640)
+        .clipped()
+    }
+}
+
 enum Brand {
     /// Template glyph for the menu bar, drawn from the same geometry as the mark.
     static let menuGlyph: NSImage = {

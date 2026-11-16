@@ -52,9 +52,12 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         if let i = args.firstIndex(of: "--snapshot"), args.indices.contains(i + 1) {
             Self.snapshot(to: args[i + 1], late: late)
         }
-        // Brand assets for the build scripts: `--render-icon out.png`, `--render-dmg-bg out.png [--2x]`.
+        // Brand assets for the build scripts: `--render-icon out.png`, `--render-social out.png`, `--render-dmg-bg out.png [--2x]`.
         if let i = args.firstIndex(of: "--render-icon"), args.indices.contains(i + 1) {
             Self.write(AppIconView(), to: args[i + 1], scale: 1)
+        }
+        if let i = args.firstIndex(of: "--render-social"), args.indices.contains(i + 1) {
+            Self.write(SocialCardView.make(), to: args[i + 1], scale: 1)
         }
         if let i = args.firstIndex(of: "--render-dmg-bg"), args.indices.contains(i + 1) {
             Self.write(DMGBackgroundView(), to: args[i + 1], scale: args.contains("--2x") ? 2 : 1)
