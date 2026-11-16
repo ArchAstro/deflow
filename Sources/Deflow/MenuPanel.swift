@@ -58,6 +58,8 @@ struct MenuPanel: View {
             footer.padding(.horizontal, 12).padding(.vertical, 10)
         }
         .frame(width: 360)
+        // Fill whatever height the window has, so a stale window size never shows bare strips.
+        .frame(maxHeight: .infinity, alignment: .top)
         .foregroundStyle(Theme.text)
         .background {
             ZStack {
@@ -68,6 +70,7 @@ struct MenuPanel: View {
                                center: UnitPoint(x: 0.1, y: 0.25), startRadius: 0, endRadius: 260)
             }
         }
+        .background(WindowFitter(tick: monitor.now))
         .preferredColorScheme(.dark)
     }
 
@@ -317,6 +320,27 @@ struct MenuPanel: View {
             .font(.system(size: 11))
             .foregroundStyle(Theme.amber)
             .fixedSize(horizontal: false, vertical: true)
+    }
+}
+
+/// MenuBarExtra keeps the window height it first opened with. When the agenda grows or shrinks,
+/// this resizes the window to the content, keeping its top edge under the menu bar.
+private struct WindowFitter: NSViewRepresentable {
+    let tick: Date
+
+    func makeNSView(context: Context) -> NSView { NSView() }
+
+    func updateNSView(_ view: NSView, context: Context) {
+        DispatchQueue.main.async {
+            guard let window = view.window, let content = window.contentView else { return }
+            let fit = content.fittingSize.height
+            let delta = content.frame.height - fit
+            guard fit > 100, fit < 1200, abs(delta) > 1 else { return }
+            var frame = window.frame
+            frame.origin.y += delta
+            frame.size.height -= delta
+            window.setFrame(frame, display: true)
+        }
     }
 }
 

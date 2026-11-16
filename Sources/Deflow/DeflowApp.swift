@@ -70,6 +70,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         if let i = args.firstIndex(of: "--snapshot-menu"), args.indices.contains(i + 1) {
             let monitor = CalendarMonitor()
             monitor.loadDemo()
+            print("menu fitting size:", NSHostingView(rootView: MenuPanel(monitor: monitor)).fittingSize)
             Self.write(MenuPanel(monitor: monitor), to: args[i + 1])
         }
         AppState.shared.start()
