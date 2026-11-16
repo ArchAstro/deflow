@@ -78,3 +78,7 @@ Google Calendar API ──60s poll──▶ CalendarMonitor ──▶ TakeoverCo
 
 The Google OAuth client ID in `GoogleAuth.swift` is a public identifier for an installed app. It has no
 client secret; sign-in uses PKCE.
+
+## License
+
+[MIT](LICENSE)
